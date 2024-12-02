@@ -393,13 +393,11 @@ set_crop_param(crop_flag, start_x, start_y, width, height)
 
 **参数**
 
-| 名称      | 类型 | 描述               |
-| --------- |
-
- ---- | ------------------ |
-| crop_flag | bool | 是否启用裁剪功能   |
-| start_x   | int  | 宽度方向的起始像素 |
-| start_y   | int  | 高度方向的起始像素 |
+| 名称      |  类型 |      描述           |
+| --------- | ---- | ------------------|
+| crop_flag | bool | 是否启用裁剪功能     |
+| start_x   | int  | 宽度方向的起始像素   |
+| start_y   | int  | 高度方向的起始像素   |
 | width     | int  | 宽度               |
 | height    | int  | 高度               |
 
@@ -540,6 +538,8 @@ run(input_tensor, output_tensor)
 
 ## 6. 示例
 
+代码需要封装到函数后再运行，同时尽量少定义全局变量，否则可能导致程序结束后内存没有释放干净。
+
 ```py
 import os
 import sys
@@ -547,45 +547,47 @@ import nncaseruntime_k230 as nn
 import numpy as np
 import cv2
 
-# init , load model
-kmodel_path="/sdcard/examples/kmodel/face_detection_320.kmodel"
+def pipeline():
+    kmodel_path="/sdcard/examples/kmodel/face_detection_320.kmodel"
+    kpu=nn.KPU()
+    ai2d=nn.AI2D()
+    
+    kpu.load_model(kmodel_path)
+    
+    # prepare kpu input for pipeline
+    tmp_tensor = nn.RuntimeTensor.from_numpy(np.ones((1,3,320,320),dtype=np.uint8))
+    kpu.set_input_tensor(0, tmp_tensor)
+    
+    ai2d_output_tensor = kpu_input_tensor = kpu.get_input_tensor(0)
+    
+    # data prepare
+    img_path = "/sdcard/examples/utils/db_img/id_1.jpg"
+    img = cv2.imread(img_path)
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    height, width, channels = img_rgb.shape
+    img_hwc = np.array(img_rgb)
+    img_tmp = img_hwc.reshape((height * width, channels))
+    img_tmp_trans = img_tmp.T.copy()
+    img_chw = img_tmp_trans.reshape((channels, height, width))
+    
+    
+    # AI2D config, output image is 320*320
+    ai2d.set_dtype(nn.AI2D_FORMAT.NCHW_FMT, nn.AI2D_FORMAT.NCHW_FMT, np.uint8, np.uint8)
+    ai2d.set_resize_param(True,nn.AI2D_INTERP_METHOD.tf_bilinear, nn.AI2D_INTERP_MODE.half_pixel)
+    ai2d.build([1,3,img_chw.shape[1],img_chw.shape[2]], [1,3,320,320])   
+    ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_chw)
+    
+    # infer
+    ai2d.run(ai2d_input_tensor, ai2d_output_tensor)
+    kpu.run()
+    
+    # get result
+    for i in range(kpu.outputs_size):
+        output_data = kpu.get_output_tensor(i)
+        result = output_data.to_numpy()
+        print(result.shape)
 
-kpu=nn.KPU()
-ai2d=nn.AI2D()
-
-kpu.load_model(kmodel_path)
-
-# prepare kpu input for pipeline
-tmp_tensor = nn.RuntimeTensor.from_numpy(np.ones((1,3,320,320),dtype=np.uint8))
-kpu.set_input_tensor(0, tmp_tensor)
-
-ai2d_output_tensor = kpu_input_tensor = kpu.get_input_tensor(0)
-
-# data prepare
-img_path = "/sdcard/examples/utils/db_img/id_1.jpg"
-img = cv2.imread(img_path)
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-height, width, channels = img_rgb.shape
-img_hwc = np.array(img_rgb)
-img_tmp = img_hwc.reshape((height * width, channels))
-img_tmp_trans = img_tmp.T.copy()
-img_chw = img_tmp_trans.reshape((channels, height, width))
-
-
-# AI2D config, output image is 320*320
-ai2d.set_dtype(nn.AI2D_FORMAT.NCHW_FMT, nn.AI2D_FORMAT.NCHW_FMT, np.uint8, np.uint8)
-ai2d.set_resize_param(True,nn.AI2D_INTERP_METHOD.tf_bilinear, nn.AI2D_INTERP_MODE.half_pixel)
-ai2d.build([1,3,img_chw.shape[1],img_chw.shape[2]], [1,3,320,320])   
-ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_chw)
-
-# infer
-ai2d.run(ai2d_input_tensor, ai2d_output_tensor)
-kpu.run()
-
-# get result
-for i in range(kpu.outputs_size):
-    output_data = kpu.get_output_tensor(i)
-    result = output_data.to_numpy()
-    print(result.shape)
+if __name__ == '__main__':
+    pipeline()
 
 ```
