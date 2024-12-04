@@ -87,10 +87,9 @@ def main():
 
     #########################################
     # 如果你不知道编译kmodel的时候该使用什么数据进行校正，
-    # 请使用ai2d的输出，也就是这里的kpu_input_tensor
-    # calib_data = kpu_input_tensor.to_numpy()
-    # cv2.imwrite('calib_data_{}.jpg'.format(i), calib_data)
     # 将你的原始图片作为输入，运行ai2d，然后保存输出
+    # calib_data = kpu_input_tensor.to_numpy()   <kpu_input_tensor 就是ai2d的输出>
+    # cv2.imwrite('calib_data_{}.jpg'.format(i), calib_data) <如果看不懂这句代码，后续流程请放弃>
     # 在编译kmodel时，保存下来的图片读取出来，作为校正数据，
     # 校正集格式参考
     # https://github.com/kendryte/nncase/blob/master/examples/user_guide/k230_simulate-ZH.ipynb
