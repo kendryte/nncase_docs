@@ -541,8 +541,6 @@ run(input_tensor, output_tensor)
 代码需要封装到函数后再运行，同时尽量少定义全局变量，否则可能导致程序结束后内存没有释放干净。
 
 ```py
-import os
-import sys
 import nncaseruntime_k230 as nn
 import numpy as np
 import cv2
@@ -561,21 +559,16 @@ def pipeline():
     ai2d_output_tensor = kpu_input_tensor = kpu.get_input_tensor(0)
     
     # data prepare
-    img_path = "/sdcard/examples/utils/db_img/id_1.jpg"
-    img = cv2.imread(img_path)
+    img = cv2.imread('input.jpg')
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    height, width, channels = img_rgb.shape
-    img_hwc = np.array(img_rgb)
-    img_tmp = img_hwc.reshape((height * width, channels))
-    img_tmp_trans = img_tmp.T.copy()
-    img_chw = img_tmp_trans.reshape((channels, height, width))
-    
+    img_nchw = img_rgb.transpose((2, 0, 1))[np.newaxis]
+    img_nchw = img_nchw.astype(np.uint8)
     
     # AI2D config, output image is 320*320
     ai2d.set_dtype(nn.AI2D_FORMAT.NCHW_FMT, nn.AI2D_FORMAT.NCHW_FMT, np.uint8, np.uint8)
     ai2d.set_resize_param(True,nn.AI2D_INTERP_METHOD.tf_bilinear, nn.AI2D_INTERP_MODE.half_pixel)
     ai2d.build([1,3,img_chw.shape[1],img_chw.shape[2]], [1,3,320,320])   
-    ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_chw)
+    ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_nchw)
     
     # infer
     ai2d.run(ai2d_input_tensor, ai2d_output_tensor)
