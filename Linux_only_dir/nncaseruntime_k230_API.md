@@ -6,13 +6,13 @@
 
 ## 1. 概述
 
-`nncaseruntime_k230` 是 nncase 运行时库的 Python 接口，专门为 K230 平台提供 AI功能（KPU）和图像处理功能（AI2D）。
+`nncaseruntime` 是 nncase 运行时库的 Python 接口，专门为 K230 平台提供 AI功能（KPU）和图像处理功能（AI2D）。
 
 ## 2. 基础数据结构
 
 ### 2.1 RuntimeTensor
 
-适用于nncaseruntime_k230的数据类型，用于KPU和AI2D的输入、输出。
+适用于nncaseruntime的数据类型，用于KPU和AI2D的输入、输出。
 
 #### 2.1.1 from_numpy
 
@@ -20,11 +20,11 @@
 
 ```Python
 >>> import numpy as np
->>> import nncaseruntime_k230
+>>> import nncaseruntime
 >>> data = np.zeros([1,3,320,320],dtype=np.uint8).reshape((1,3,320,320))
->>> tensorA = nncaseruntime_k230.RuntimeTensor.from_numpy(data)
+>>> tensorA = nncaseruntime.RuntimeTensor.from_numpy(data)
 >>> tensorA
-<nncaseruntime_k230._nncaseruntime_k230.RuntimeTensor object at 0x3fb0acbd70>
+<nncaseruntime._nncaseruntime_k230.RuntimeTensor object at 0x3fb0acbd70>
 ```
 
 #### 2.1.2 to_numpy
@@ -50,7 +50,7 @@ dtype('uint8')
 
 ```py
 >>> tensorA
-<nncaseruntime_k230._nncaseruntime_k230.RuntimeTensor object at 0x3fb0acbd70>
+<nncaseruntime._nncaseruntime_k230.RuntimeTensor object at 0x3fb0acbd70>
 >>> tensorA.shape 
 [1, 3, 320, 320]
 ```
@@ -123,14 +123,14 @@ RuntimeTensor的占用字节数。
 - `align_corner`：对齐角落的插值
 - `half_pixel`：半像素插值
 
-## 4. KPU模块
+## 4. Interpreter模块(KPU)
 
-KPU 模块提供了用于调用 KPU 硬件执行神经网络模型推理的基本功能，包括加载模型、设置输入数据、执行推理及获取输出结果等。
-使用之前需要初始化KPU对象。
+Interpreter模块提供了用于调用 KPU 硬件执行神经网络模型推理的基本功能，包括加载模型、设置输入数据、执行推理及获取输出结果等。
+使用之前需要初始化Interpreter对象。
 
 ```
-import nncaseruntime_k230
-kpu = nncaseruntime_k230.KPU()
+import nncaseruntime
+kpu = nncaseruntime.Interpreter()
 ```
 
 ### 4.1 load_model
@@ -354,8 +354,8 @@ AI2D 类提供了丰富的图像处理功能，支持数据类型转换、裁剪
 使用之前需要初始化AI2D对象。
 
 ```
-import nncaseruntime_k230
-ai2d = nncaseruntime_k230.AI2D()
+import nncaseruntime
+ai2d = nncaseruntime.AI2D()
 ```
 
 ### 5.1 set_dtype
@@ -541,13 +541,13 @@ run(input_tensor, output_tensor)
 代码需要封装到函数后再运行，同时尽量少定义全局变量，否则可能导致程序结束后内存没有释放干净。
 
 ```py
-import nncaseruntime_k230 as nn
+import nncaseruntime as nn
 import numpy as np
 import cv2
 
 def pipeline():
     kmodel_path="/sdcard/examples/kmodel/face_detection_320.kmodel"
-    kpu=nn.KPU()
+    kpu=nn.Interpreter()
     ai2d=nn.AI2D()
     
     kpu.load_model(kmodel_path)

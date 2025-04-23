@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import cv2
-import nncaseruntime_k230 as nn
+import nncaseruntime as nn
 
 confidence_thres, iou_thres = 0.1, 0.2
 random.seed(0)
@@ -34,7 +34,7 @@ def main():
     #########################################
     
     
-    kpu = nn.KPU()
+    kpu = nn.Interpreter()
     ai2d = nn.AI2D()
     
     kpu.load_model("test.kmodel")
@@ -85,19 +85,6 @@ def main():
                [1,3,640,640])   
     ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_nchw)
 
-    #########################################
-    # 如果你不知道编译kmodel的时候该使用什么数据进行校正，
-    # 将你的原始图片作为输入，运行ai2d，然后保存输出
-    # calib_data = kpu_input_tensor.to_numpy()   <kpu_input_tensor 就是ai2d的输出>
-    # cv2.imwrite('calib_data_{}.jpg'.format(i), calib_data) <如果看不懂这句代码，后续流程请放弃>
-    # 在编译kmodel时，保存下来的图片读取出来，作为校正数据，
-    # 校正集格式参考
-    # https://github.com/kendryte/nncase/blob/master/examples/user_guide/k230_simulate-ZH.ipynb
-    # 校正集的数量为2   
-    # calib_data = [[np.random.rand(1, 240, 320, 3).astype(np.float32), np.random.rand(1, 240, 320, 3).astype(np.float32)]]
-    # 同时编译kmodel时的前处理参数只需要配置input_shape为你的模型输入，输入类型为uint8，input_range为[0,255]或者[0,1]<这取决于你模型训练时输入的范围,当前demo为yolo11, input_range为[0,1]>,其他参数按照模型中的信息配置即可
-    #########################################
-
     ai2d.run(ai2d_input_tensor, kpu_input_tensor)
     kpu.run()
 
@@ -128,26 +115,19 @@ def draw_detections(img, box, score, class_id):
         """
         # 提取边界框的坐标
         x1, y1, w, h = box
- 
         # 获取类别对应的颜色
         color = CLASS_COLORS[class_id]
- 
         # 在图像上绘制边界框
         cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), color, 2)
- 
         # 创建包含类别名和分数的标签文本
         label = f"{CLASS_NAMES[class_id]}: {score:.2f}"
- 
         # 计算标签文本的尺寸
         (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
- 
         # 计算标签文本的位置
         label_x = x1
         label_y = y1 - 10 if y1 - 10 > label_height else y1 + 10
- 
         # 绘制填充的矩形作为标签文本的背景
         cv2.rectangle(img, (label_x, label_y - label_height), (label_x + label_width, label_y + label_height), color, cv2.FILLED)
- 
         # 在图像上绘制标签文本
         cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
