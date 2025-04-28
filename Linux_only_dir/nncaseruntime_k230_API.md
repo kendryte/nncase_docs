@@ -358,7 +358,7 @@ import nncaseruntime
 ai2d = nncaseruntime.AI2D()
 ```
 
-### 5.1 set_dtype
+### 5.1 set_datatype
 
 **描述**
 
@@ -367,7 +367,7 @@ ai2d = nncaseruntime.AI2D()
 **语法**
 
 ```python
-set_dtype(src_format, dst_format, src_type, dst_type)
+set_datatype(src_format, dst_format, src_type, dst_type)
 ```
 
 **参数**
@@ -565,9 +565,9 @@ def pipeline():
     img_nchw = img_nchw.astype(np.uint8)
     
     # AI2D config, output image is 320*320
-    ai2d.set_dtype(nn.AI2D_FORMAT.NCHW_FMT, nn.AI2D_FORMAT.NCHW_FMT, np.uint8, np.uint8)
+    ai2d.set_datatype(nn.AI2D_FORMAT.NCHW_FMT, nn.AI2D_FORMAT.NCHW_FMT, np.uint8, np.uint8)
     ai2d.set_resize_param(True,nn.AI2D_INTERP_METHOD.tf_bilinear, nn.AI2D_INTERP_MODE.half_pixel)
-    ai2d.build([1,3,img_chw.shape[1],img_chw.shape[2]], [1,3,320,320])   
+    ai2d.build([1,3,img_nchw.shape[1],img_nchw.shape[2]], [1,3,320,320])
     ai2d_input_tensor = nn.RuntimeTensor.from_numpy(img_nchw)
     
     # infer
